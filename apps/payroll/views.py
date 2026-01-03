@@ -107,6 +107,16 @@ def admin_payroll_view(request):
     
     total_remaining = total_to_be_paid - total_paid
     
+    # Calculate payment percentage for progress bar
+    payment_percentage = 0
+    if total_to_be_paid > 0:
+        payment_percentage = (total_paid / total_to_be_paid) * 100
+    
+    # Payment status counts for charts
+    paid_count = Payroll.objects.filter(payment_status='paid').count()
+    partial_count = Payroll.objects.filter(payment_status='partial').count()
+    pending_count = Payroll.objects.filter(payment_status='pending').count()
+    
     # Employees with pending payments
     pending_payrolls = Payroll.objects.filter(
         Q(payment_status='pending') | Q(payment_status='partial')
@@ -139,6 +149,9 @@ def admin_payroll_view(request):
         payments = Payment.objects.filter(payroll=payroll).order_by('-payment_date')
         payroll_list.append((payroll, payments))
     
+    # Get all employees for the create payroll modal
+    employees = User.objects.filter(role='employee')
+    
     context = {
         'payroll_list': payroll_list,
         'payrolls': payrolls,
@@ -148,10 +161,15 @@ def admin_payroll_view(request):
         'total_to_be_paid': total_to_be_paid,
         'total_paid': total_paid,
         'total_remaining': total_remaining,
+        'payment_percentage': payment_percentage,
+        'paid_count': paid_count,
+        'partial_count': partial_count,
+        'pending_count': pending_count,
         'pending_payrolls': pending_payrolls,
         'current_month': current_month,
         'current_year': current_year,
         'today': today,
+        'employees': employees,
     }
     return render(request, 'payroll/admin_payroll.html', context)
 
@@ -206,6 +224,61 @@ def create_payroll(request):
             messages.error(request, f'Error creating payroll: {str(e)}')
     
     return redirect('payroll_view')
+
+
+@login_required
+def bulk_create_payrolls(request):
+    """Bulk create payroll records for all employees for a given month/year (Admin only)"""
+    if request.user.role != 'admin':
+        messages.error(request, 'Access denied. Admin only.')
+        return redirect('payroll_view')
+    
+    if request.method == 'POST':
+        try:
+            month = int(request.POST.get('month'))
+            year = int(request.POST.get('year'))
+            default_basic_salary = float(request.POST.get('default_basic_salary', 0))
+            default_allowances = float(request.POST.get('default_allowances', 0))
+            default_deductions = float(request.POST.get('default_deductions', 0))
+            
+            if default_basic_salary < 0 or default_allowances < 0 or default_deductions < 0:
+                messages.error(request, 'Amounts cannot be negative.')
+                return redirect('payroll_view')
+            
+            employees = User.objects.filter(role='employee')
+            created_count = 0
+            
+            for employee in employees:
+                # Check if payroll already exists
+                if Payroll.objects.filter(employee=employee, month=month, year=year).exists():
+                    continue  # Skip if already exists
+                
+                # Calculate working days
+                working_days = calculate_working_days(employee, month, year)
+                
+                # Create payroll
+                Payroll.objects.create(
+                    employee=employee,
+                    month=month,
+                    year=year,
+                    basic_salary=default_basic_salary,
+                    allowances=default_allowances,
+                    deductions=default_deductions,
+                    working_days=working_days
+                )
+                created_count += 1
+            
+            if created_count > 0:
+                messages.success(request, f'Successfully created payrolls for {created_count} employee(s) for {month}/{year}.')
+            else:
+                messages.info(request, f'No new payrolls created. All employees already have payrolls for {month}/{year}.')
+                
+        except ValueError:
+            messages.error(request, 'Invalid input format. Please enter valid numbers.')
+        except Exception as e:
+            messages.error(request, f'Error creating payrolls: {str(e)}')
+    
+    return redirect(f'payroll_view?t={timezone.now().timestamp()}')
 
 
 @login_required
@@ -291,7 +364,7 @@ def edit_payroll(request, payroll_id):
         except Exception as e:
             messages.error(request, f'Error updating payroll: {str(e)}')
     
-    return redirect('payroll_view')
+    return redirect(f'payroll_view?t={timezone.now().timestamp()}')
 
 
 @login_required
@@ -306,7 +379,8 @@ def update_amount_paid_pending(request, payroll_id):
     if request.method == 'POST':
         try:
             amount_paid = float(request.POST.get('amount_paid', 0))
-            amount_pending = float(request.POST.get('amount_pending', 0))
+            # Calculate amount_pending instead of getting from form
+            amount_pending = payroll.net_salary - amount_paid
             payment_date = request.POST.get('payment_date', '')
             notes = request.POST.get('notes', '')
             
@@ -314,18 +388,9 @@ def update_amount_paid_pending(request, payroll_id):
                 messages.error(request, 'Amount Paid cannot be negative.')
                 return redirect('payroll_view')
             
-            if amount_pending < 0:
-                messages.error(request, 'Amount Pending cannot be negative.')
+            if amount_paid > payroll.net_salary:
+                messages.error(request, f'Amount Paid cannot exceed Net Salary (${payroll.net_salary:.2f})')
                 return redirect('payroll_view')
-            
-            # Validate that amount_paid + amount_pending = net_salary
-            if abs((amount_paid + amount_pending) - payroll.net_salary) > 0.01:
-                messages.error(request, f'Amount Paid + Amount Pending must equal Net Salary (${payroll.net_salary:.2f})')
-                return redirect('payroll_view')
-            
-            # Calculate the difference to record as a payment transaction
-            old_amount_paid = payroll.amount_paid
-            payment_difference = amount_paid - old_amount_paid
             
             # Update payroll
             payroll.amount_paid = amount_paid
@@ -338,10 +403,10 @@ def update_amount_paid_pending(request, payroll_id):
             
             # Create payment record if there's a change
             from .models import Payment
-            if abs(payment_difference) > 0.01:
+            if abs(amount_paid - old_amount_paid) > 0.01:
                 Payment.objects.create(
                     payroll=payroll,
-                    amount=abs(payment_difference),
+                    amount=abs(amount_paid - old_amount_paid),
                     payment_date=payroll.payment_date,
                     notes=notes or f'Updated: Amount Paid set to ${amount_paid:.2f}, Amount Pending: ${amount_pending:.2f}',
                     created_by=request.user
@@ -353,7 +418,7 @@ def update_amount_paid_pending(request, payroll_id):
         except Exception as e:
             messages.error(request, f'Error updating payment: {str(e)}')
     
-    return redirect('payroll_view')
+    return redirect(f'payroll_view?t={timezone.now().timestamp()}')
 
 
 @login_required
@@ -424,4 +489,4 @@ def update_payment(request, payroll_id):
         except Exception as e:
             messages.error(request, f'Error processing payment: {str(e)}')
     
-    return redirect('payroll_view')
+    return redirect(f'payroll_view?t={timezone.now().timestamp()}')

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}DayFlow HR{% endblock %}</title>
+    {% block extra_head %}{% endblock %}
     {% load bootstrap4 %}
     {% load static %}
     {% bootstrap_css %}
@@ -94,5 +95,6 @@
     </footer>
 
     <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
