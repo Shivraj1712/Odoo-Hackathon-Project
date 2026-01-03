@@ -30,7 +30,7 @@
                             <img src="{{ profile.profile_pic.url }}" alt="Profile Picture" class="profile-image-large">
                         {% else %}
                             <div class="profile-image-placeholder">
-                                <i class="fas fa-user fa-5x"></i>
+                                <i class="fas fa-user fa-4x"></i>
                             </div>
                         {% endif %}
                     </div>
@@ -52,69 +52,97 @@
         
         <div class="col-md-8">
             <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header">
                     <h3 class="mb-0"><i class="fas fa-info-circle"></i> Profile Information{% if is_admin_view %} - {{ profile.user.get_full_name|default:profile.user.username }}{% endif %}</h3>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6 mb-4">
-                            <h5 class="text-primary mb-3"><i class="fas fa-user"></i> Personal Information</h5>
-                            <div class="info-item">
-                                <strong><i class="fas fa-id-card text-muted"></i> Employee ID:</strong>
-                                <span class="float-right">{{ profile.user.username }}</span>
+                        <div class="col-md-6">
+                            <h5 class="mb-4 text-primary"><i class="fas fa-user"></i> Personal Information</h5>
+                            
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">
+                                    <i class="fas fa-id-card"></i>
+                                    <span>Employee ID</span>
+                                </div>
+                                <div class="profile-info-value">{{ profile.user.username }}</div>
                             </div>
-                            <hr>
-                            <div class="info-item">
-                                <strong><i class="fas fa-user text-muted"></i> Full Name:</strong>
-                                <span class="float-right">{{ profile.user.get_full_name|default:"N/A" }}</span>
+                            
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">
+                                    <i class="fas fa-user"></i>
+                                    <span>Full Name</span>
+                                </div>
+                                <div class="profile-info-value">{{ profile.user.get_full_name|default:"N/A" }}</div>
                             </div>
-                            <hr>
-                            <div class="info-item">
-                                <strong><i class="fas fa-envelope text-muted"></i> Email:</strong>
-                                <span class="float-right">{{ profile.user.email }}</span>
+                            
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">
+                                    <i class="fas fa-envelope"></i>
+                                    <span>Email</span>
+                                </div>
+                                <div class="profile-info-value">{{ profile.user.email }}</div>
                             </div>
-                            <hr>
-                            <div class="info-item">
-                                <strong><i class="fas fa-phone text-muted"></i> Phone:</strong>
-                                <span class="float-right">{{ profile.phone|default:"N/A" }}</span>
+                            
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">
+                                    <i class="fas fa-phone"></i>
+                                    <span>Phone</span>
+                                </div>
+                                <div class="profile-info-value">{{ profile.phone|default:"N/A" }}</div>
                             </div>
-                            <hr>
+                            
                             {% if profile.date_of_birth %}
-                            <div class="info-item">
-                                <strong><i class="fas fa-birthday-cake text-muted"></i> Date of Birth:</strong>
-                                <span class="float-right">{{ profile.date_of_birth|date:"M d, Y" }}</span>
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">
+                                    <i class="fas fa-birthday-cake"></i>
+                                    <span>Date of Birth</span>
+                                </div>
+                                <div class="profile-info-value">{{ profile.date_of_birth|date:"M d, Y" }}</div>
                             </div>
-                            <hr>
                             {% endif %}
                         </div>
                         
-                        <div class="col-md-6 mb-4">
-                            <h5 class="text-primary mb-3"><i class="fas fa-briefcase"></i> Work Information</h5>
-                            <div class="info-item">
-                                <strong><i class="fas fa-user-tag text-muted"></i> Role:</strong>
-                                <span class="float-right">
+                        <div class="col-md-6">
+                            <h5 class="mb-4 text-primary"><i class="fas fa-briefcase"></i> Work Information</h5>
+                            
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">
+                                    <i class="fas fa-user-tag"></i>
+                                    <span>Role</span>
+                                </div>
+                                <div class="profile-info-value">
                                     <span class="badge badge-{% if profile.user.role == 'admin' %}primary{% else %}info{% endif %}">
                                         {{ profile.user.role|title }}
                                     </span>
-                                </span>
+                                </div>
                             </div>
-                            <hr>
-                            <div class="info-item">
-                                <strong><i class="fas fa-calendar-plus text-muted"></i> Date Joined:</strong>
-                                <span class="float-right">{{ profile.user.date_joined|date:"M d, Y" }}</span>
+                            
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">
+                                    <i class="fas fa-calendar-plus"></i>
+                                    <span>Date Joined</span>
+                                </div>
+                                <div class="profile-info-value">{{ profile.user.date_joined|date:"M d, Y" }}</div>
                             </div>
-                            <hr>
+                            
                             {% if profile.hire_date %}
-                            <div class="info-item">
-                                <strong><i class="fas fa-calendar-check text-muted"></i> Hire Date:</strong>
-                                <span class="float-right">{{ profile.hire_date|date:"M d, Y" }}</span>
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <span>Hire Date</span>
+                                </div>
+                                <div class="profile-info-value">{{ profile.hire_date|date:"M d, Y" }}</div>
                             </div>
-                            <hr>
                             {% endif %}
+                            
                             {% if profile.address %}
-                            <div class="info-item">
-                                <strong><i class="fas fa-map-marker-alt text-muted"></i> Address:</strong>
-                                <div class="mt-2 text-right">{{ profile.address }}</div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>Address</span>
+                                </div>
+                                <div class="profile-info-value text-right">{{ profile.address|linebreaks }}</div>
                             </div>
                             {% endif %}
                         </div>
@@ -124,48 +152,4 @@
         </div>
     </div>
 </div>
-
-<style>
-.profile-image-wrapper {
-    position: relative;
-    display: inline-block;
-}
-
-.profile-image-large {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 5px solid #667eea;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-}
-
-.profile-image-large:hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
-}
-
-.profile-image-placeholder {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    border: 5px solid #667eea;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-    margin: 0 auto;
-}
-
-.info-item {
-    padding: 0.5rem 0;
-}
-
-.info-item strong {
-    color: #495057;
-}
-</style>
 {% endblock %}
