@@ -1,3 +1,9 @@
+# 🚀 Odoo Hackathon Project – Live Deployment
+
+A full-stack web application built as part of the **Odoo Hackathon**, focusing on clean UI, scalable backend architecture, and real-world deployment.
+
+🌐 **Live Demo:**  https://odoo-hackathon-project-wegc.onrender.com
+
 # DayFlow - HR Management System
 
 A Django-based HR management system with multiple apps for managing employees, attendance, leave, payroll, and more.
