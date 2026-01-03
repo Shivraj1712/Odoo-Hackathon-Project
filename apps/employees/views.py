@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import EmployeeProfile
 from .forms import EmployeeProfileForm
+from apps.accounts.decorators import admin_required
 
 
 @login_required
@@ -23,3 +24,9 @@ def edit_profile(request):
     else:
         form = EmployeeProfileForm(instance=profile)
     return render(request, 'employees/edit_profile.html', {'form': form})
+
+
+@admin_required
+def employee_list(request):
+    employees = EmployeeProfile.objects.all()
+    return render(request, 'employees/employee_list.html', {'employees': employees})

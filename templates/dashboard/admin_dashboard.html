@@ -3,7 +3,8 @@
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-<h2>Admin Dashboard</h2>
+<h2>Welcome, {{ user.get_full_name|default:user.username }}</h2>
+<h3>Admin Dashboard</h3>
 <div class="row">
     <div class="col-md-3">
         <div class="card">
@@ -40,6 +41,6 @@
 </div>
 <div class="mt-4">
     <a href="{% url 'employee_list' %}" class="btn btn-secondary">Manage Employees</a>
-    <a href="{% url 'leave_approval' %}" class="btn btn-secondary">Approve Leaves</a>
+    <a href="{% url 'leave_list' %}" class="btn btn-secondary">Manage Leaves</a>
 </div>
 {% endblock %}

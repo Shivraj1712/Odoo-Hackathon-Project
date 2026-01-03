@@ -11,13 +11,56 @@
                 <h3>Register</h3>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" id="registerForm">
                     {% csrf_token %}
-                    {% bootstrap_form form %}
-                    <button type="submit" class="btn btn-primary">Register</button>
+                    {% bootstrap_field form.username %}
+                    {% bootstrap_field form.first_name %}
+                    {% bootstrap_field form.last_name %}
+                    {% bootstrap_field form.email %}
+                    <button type="button" id="sendOtpBtn" class="btn btn-secondary mb-3">Send OTP</button>
+                    <div id="otpField" style="display: none;">
+                        <div class="form-group">
+                            <label for="id_otp">OTP</label>
+                            <input type="text" name="otp" class="form-control" id="id_otp" maxlength="6" required>
+                        </div>
+                        {% bootstrap_field form.password1 %}
+                        {% bootstrap_field form.password2 %}
+                        {% bootstrap_field form.role %}
+                        <button type="submit" class="btn btn-primary">Register</button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('sendOtpBtn').addEventListener('click', function() {
+    const email = document.querySelector('input[name="email"]').value;
+    const username = document.querySelector('input[name="username"]').value;
+    if (!email || !username) {
+        alert('Please enter Employee ID and email first');
+        return;
+    }
+    
+    fetch('/send-otp/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: 'email=' + encodeURIComponent(email) + '&username=' + encodeURIComponent(username)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('otpField').style.display = 'block';
+            document.getElementById('sendOtpBtn').style.display = 'none';
+            alert(data.message);
+        } else {
+            alert(data.message);
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -8,11 +8,15 @@ class UserRegisterForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2', 'role']
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2', 'role']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].label = 'Employee ID'
 
 
 class UserLoginForm(forms.Form):
-    username = forms.CharField()
+    email = forms.EmailField(label='Email')
     password = forms.CharField(widget=forms.PasswordInput)
 
 
