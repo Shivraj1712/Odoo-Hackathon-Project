@@ -201,64 +201,6 @@
                         </thead>
                         <tbody>
                             {% for payroll, payments in payroll_list %}
-                                <tr class="align-middle">
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar-circle bg-primary text-white me-3" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                                                {{ payroll.employee.get_full_name|default:payroll.employee.username|slice:":1"|upper }}
-                                            </div>
-                                            <div>
-                                                <strong>{{ payroll.employee.get_full_name|default:payroll.employee.username }}</strong><br>
-                                                <small class="text-muted">{{ payroll.employee.email }}</small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info">{{ payroll.month }}/{{ payroll.year }}</span>
-                                    </td>
-                                    <td class="fw-bold">${{ payroll.basic_salary|floatformat:2 }}</td>
-                                    <td class="fw-bold text-primary">${{ payroll.net_salary|floatformat:2 }}</td>
-                                    <td class="text-success fw-bold">${{ payroll.amount_paid|floatformat:2 }}</td>
-                                    <td class="text-warning fw-bold">${{ payroll.amount_remaining|floatformat:2 }}</td>
-                                    <td>
-                                        <span class="badge bg-secondary">{{ payroll.working_days }}</span>
-                                    </td>
-                                    <td>
-                                        {% if payroll.payment_status == 'paid' %}
-                                            <span class="badge bg-success fs-6 px-3 py-2">Paid</span>
-                                        {% elif payroll.payment_status == 'partial' %}
-                                            <span class="badge bg-warning fs-6 px-3 py-2">Partial</span>
-                                        {% else %}
-                                            <span class="badge bg-danger fs-6 px-3 py-2">Pending</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if payroll.payment_date %}
-                                            <span class="text-muted">{{ payroll.payment_date|date:"M d, Y" }}</span>
-                                        {% else %}
-                                            <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <button type="button" class="btn btn-outline-warning" data-toggle="modal" data-target="#editModal{{ payroll.id }}" title="Edit Payroll Amount">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#updateAmountModal{{ payroll.id }}" title="Update Amount Paid">
-                                                <i class="fas fa-money-bill-alt"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#paymentModal{{ payroll.id }}" title="Make Payment">
-                                                <i class="fas fa-dollar-sign"></i>
-                                            </button>
-                                            {% if payments %}
-                                            <button type="button" class="btn btn-outline-info" data-toggle="modal" data-target="#historyModal{{ payroll.id }}" title="View Payment History">
-                                                <i class="fas fa-history"></i>
-                                            </button>
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                </tr>
-
                                 <!-- Payment Modal -->
                                 <div class="modal fade" id="paymentModal{{ payroll.id }}" tabindex="-1">
                                     <div class="modal-dialog modal-lg">
