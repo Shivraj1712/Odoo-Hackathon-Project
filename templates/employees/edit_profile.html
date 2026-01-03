@@ -45,6 +45,25 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
+                                            <label for="{{ form.first_name.id_for_label }}">
+                                                <i class="fas fa-user"></i> First Name
+                                            </label>
+                                            {{ form.first_name }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.last_name.id_for_label }}">
+                                                <i class="fas fa-user"></i> Last Name
+                                            </label>
+                                            {{ form.last_name }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
                                             <label for="{{ form.phone.id_for_label }}">
                                                 <i class="fas fa-phone"></i> Phone
                                             </label>

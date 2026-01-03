@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+{% load static %}
+
+{% block title %}My Payroll{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="fas fa-money-bill-wave"></i> My Payroll</h2>
+            <p class="text-muted">View your salary information (Read-only)</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success">
+                        <i class="fas fa-money-check-alt"></i> Total Salary Credited
+                    </h5>
+                    <h3 class="mb-0">${{ total_credited|floatformat:2 }}</h3>
+                    <small class="text-muted">Total amount received</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-warning">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">
+                        <i class="fas fa-clock"></i> Amount to be Credited
+                    </h5>
+                    <h3 class="mb-0">${{ total_to_be_credited|floatformat:2 }}</h3>
+                    <small class="text-muted">Pending payment</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payroll Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-list"></i> Payroll History</h4>
+        </div>
+        <div class="card-body">
+            {% if payrolls %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Month/Year</th>
+                                <th>Basic Salary</th>
+                                <th>Allowances</th>
+                                <th>Deductions</th>
+                                <th>Net Salary</th>
+                                <th>Amount Paid</th>
+                                <th>Amount Remaining</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payroll, payments in payroll_list %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ payroll.get_month_display|default:payroll.month }}/{{ payroll.year }}</strong>
+                                    </td>
+                                    <td>${{ payroll.basic_salary|floatformat:2 }}</td>
+                                    <td>${{ payroll.allowances|floatformat:2 }}</td>
+                                    <td>${{ payroll.deductions|floatformat:2 }}</td>
+                                    <td><strong>${{ payroll.net_salary|floatformat:2 }}</strong></td>
+                                    <td class="text-success">${{ payroll.amount_paid|floatformat:2 }}</td>
+                                    <td class="text-warning">${{ payroll.amount_remaining|floatformat:2 }}</td>
+                                    <td>
+                                        {% if payroll.payment_status == 'paid' %}
+                                            <span class="badge badge-success">Paid</span>
+                                        {% elif payroll.payment_status == 'partial' %}
+                                            <span class="badge badge-warning">Partial</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">Pending</span>
+                                        {% endif %}
+                                        {% if payments %}
+                                        <button type="button" class="btn btn-sm btn-info ml-2" data-toggle="modal" data-target="#historyModal{{ payroll.id }}">
+                                            <i class="fas fa-history"></i>
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                
+                                <!-- Payment History Modal for Employee -->
+                                {% if payments %}
+                                <div class="modal fade" id="historyModal{{ payroll.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-info text-white">
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-history"></i> Payment History - {{ payroll.month }}/{{ payroll.year }}
+                                                </h5>
+                                                <button type="button" class="close text-white" data-dismiss="modal">
+                                                    <span>&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body text-center">
+                                                                    <h6 class="text-muted mb-1">Net Salary</h6>
+                                                                    <h5 class="text-primary mb-0">${{ payroll.net_salary|floatformat:2 }}</h5>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body text-center">
+                                                                    <h6 class="text-muted mb-1">Amount Paid</h6>
+                                                                    <h5 class="text-success mb-0">${{ payroll.amount_paid|floatformat:2 }}</h5>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body text-center">
+                                                                    <h6 class="text-muted mb-1">Amount Remaining</h6>
+                                                                    <h5 class="text-warning mb-0">${{ payroll.amount_remaining|floatformat:2 }}</h5>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <h6>Payment Details:</h6>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Date</th>
+                                                                <th>Amount</th>
+                                                                <th>Notes</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for payment in payments %}
+                                                                <tr>
+                                                                    <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                                                                    <td class="text-success"><strong>${{ payment.amount|floatformat:2 }}</strong></td>
+                                                                    <td>{{ payment.notes|default:"-" }}</td>
+                                                                </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> No payroll records found.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-title {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+    .card-body h3 {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
+

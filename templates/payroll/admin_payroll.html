@@ -1,0 +1,418 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+{% load static %}
+
+{% block title %}Payroll Management{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="fas fa-money-bill-wave"></i> Payroll Management</h2>
+            <p class="text-muted">Manage employee payrolls, payments, and attendance</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm stats-card">
+                <div class="card-body">
+                    <h5>Total Employees</h5>
+                    <h3>{{ total_employees }}</h3>
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm stats-card-attendance">
+                <div class="card-body">
+                    <h5>Payroll Processed</h5>
+                    <h3>{{ payroll_processed }}</h3>
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm stats-card-pending">
+                <div class="card-body">
+                    <h5>This Month Attendance</h5>
+                    <h3>{{ current_month_attendance }}</h3>
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm border-danger">
+                <div class="card-body">
+                    <h5 class="text-danger">Amount Remaining</h5>
+                    <h3 class="text-danger">${{ total_remaining|floatformat:2 }}</h3>
+                    <small class="text-muted">To be paid</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Summary -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-success">
+                <div class="card-body">
+                    <h5 class="text-success">
+                        <i class="fas fa-check-circle"></i> Total Amount Paid
+                    </h5>
+                    <h3 class="text-success">${{ total_paid|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-primary">
+                <div class="card-body">
+                    <h5 class="text-primary">
+                        <i class="fas fa-dollar-sign"></i> Total Amount to be Paid
+                    </h5>
+                    <h3 class="text-primary">${{ total_to_be_paid|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter by Month/Year -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <div class="form-group mr-3">
+                    <label for="month" class="mr-2">Month:</label>
+                    <select name="month" id="month" class="form-control">
+                        <option value="1" {% if current_month == 1 %}selected{% endif %}>January</option>
+                        <option value="2" {% if current_month == 2 %}selected{% endif %}>February</option>
+                        <option value="3" {% if current_month == 3 %}selected{% endif %}>March</option>
+                        <option value="4" {% if current_month == 4 %}selected{% endif %}>April</option>
+                        <option value="5" {% if current_month == 5 %}selected{% endif %}>May</option>
+                        <option value="6" {% if current_month == 6 %}selected{% endif %}>June</option>
+                        <option value="7" {% if current_month == 7 %}selected{% endif %}>July</option>
+                        <option value="8" {% if current_month == 8 %}selected{% endif %}>August</option>
+                        <option value="9" {% if current_month == 9 %}selected{% endif %}>September</option>
+                        <option value="10" {% if current_month == 10 %}selected{% endif %}>October</option>
+                        <option value="11" {% if current_month == 11 %}selected{% endif %}>November</option>
+                        <option value="12" {% if current_month == 12 %}selected{% endif %}>December</option>
+                    </select>
+                </div>
+                <div class="form-group mr-3">
+                    <label for="year" class="mr-2">Year:</label>
+                    <input type="number" name="year" id="year" class="form-control" value="{{ current_year }}" min="2020" max="2030">
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <a href="{% url 'payroll_view' %}" class="btn btn-secondary ml-2">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payroll Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-list"></i> Payroll Details</h4>
+        </div>
+        <div class="card-body">
+            {% if payrolls %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Month/Year</th>
+                                <th>Basic Salary</th>
+                                <th>Net Salary</th>
+                                <th>Amount Paid</th>
+                                <th>Amount Remaining</th>
+                                <th>Working Days</th>
+                                <th>Status</th>
+                                <th>Payment Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payroll, payments in payroll_list %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ payroll.employee.get_full_name|default:payroll.employee.username }}</strong><br>
+                                        <small class="text-muted">{{ payroll.employee.email }}</small>
+                                    </td>
+                                    <td>
+                                        <strong>{{ payroll.month }}/{{ payroll.year }}</strong>
+                                    </td>
+                                    <td>${{ payroll.basic_salary|floatformat:2 }}</td>
+                                    <td><strong>${{ payroll.net_salary|floatformat:2 }}</strong></td>
+                                    <td class="text-success">${{ payroll.amount_paid|floatformat:2 }}</td>
+                                    <td class="text-warning">
+                                        <strong>${{ payroll.amount_remaining|floatformat:2 }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-info">{{ payroll.working_days }}</span>
+                                    </td>
+                                    <td>
+                                        {% if payroll.payment_status == 'paid' %}
+                                            <span class="badge badge-success">Paid</span>
+                                        {% elif payroll.payment_status == 'partial' %}
+                                            <span class="badge badge-warning">Partial</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if payroll.payment_date %}
+                                            {{ payroll.payment_date|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#paymentModal{{ payroll.id }}">
+                                            <i class="fas fa-dollar-sign"></i> Pay
+                                        </button>
+                                        {% if payments %}
+                                        <button type="button" class="btn btn-sm btn-info mt-1" data-toggle="modal" data-target="#historyModal{{ payroll.id }}">
+                                            <i class="fas fa-history"></i> History
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+
+                                <!-- Payment Modal -->
+                                <div class="modal fade" id="paymentModal{{ payroll.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-primary text-white">
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-money-bill-wave"></i> Make Payment - {{ payroll.employee.get_full_name|default:payroll.employee.username }}
+                                                </h5>
+                                                <button type="button" class="close text-white" data-dismiss="modal">
+                                                    <span>&times;</span>
+                                                </button>
+                                            </div>
+                                            <form method="post" action="{% url 'update_payment' payroll.id %}">
+                                                {% csrf_token %}
+                                                <div class="modal-body">
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-4">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body text-center">
+                                                                    <h6 class="text-muted mb-1">Net Salary</h6>
+                                                                    <h4 class="text-primary mb-0">${{ payroll.net_salary|floatformat:2 }}</h4>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body text-center">
+                                                                    <h6 class="text-muted mb-1">Amount Paid</h6>
+                                                                    <h4 class="text-success mb-0">${{ payroll.amount_paid|floatformat:2 }}</h4>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body text-center">
+                                                                    <h6 class="text-muted mb-1">Amount Remaining</h6>
+                                                                    <h4 class="text-warning mb-0">${{ payroll.amount_remaining|floatformat:2 }}</h4>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="form-group">
+                                                        <label><strong>Payment Type *</strong></label>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="payment_type" id="incremental{{ payroll.id }}" value="incremental" checked onchange="togglePaymentType({{ payroll.id }})">
+                                                            <label class="form-check-label" for="incremental{{ payroll.id }}">
+                                                                <strong>Add Payment (Incremental)</strong> - Pay a partial amount now
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="payment_type" id="total{{ payroll.id }}" value="total" onchange="togglePaymentType({{ payroll.id }})">
+                                                            <label class="form-check-label" for="total{{ payroll.id }}">
+                                                                <strong>Set Total Amount</strong> - Set the total amount paid
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="form-group" id="incrementalAmount{{ payroll.id }}">
+                                                        <label for="payment_amount">Amount to Pay *</label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <span class="input-group-text">$</span>
+                                                            </div>
+                                                            <input type="number" step="0.01" class="form-control" name="payment_amount" id="payment_amount" placeholder="0.00" max="{{ payroll.amount_remaining }}" required>
+                                                        </div>
+                                                        <small class="form-text text-muted">Enter the amount you want to pay now (Maximum: ${{ payroll.amount_remaining|floatformat:2 }})</small>
+                                                    </div>
+                                                    
+                                                    <div class="form-group" id="totalAmount{{ payroll.id }}" style="display: none;">
+                                                        <label for="payment_amount_total">Total Amount Paid *</label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <span class="input-group-text">$</span>
+                                                            </div>
+                                                            <input type="number" step="0.01" class="form-control" name="payment_amount" id="payment_amount_total" placeholder="{{ payroll.amount_paid|floatformat:2 }}" max="{{ payroll.net_salary }}" value="{{ payroll.amount_paid }}">
+                                                        </div>
+                                                        <small class="form-text text-muted">Enter the total amount paid so far (Maximum: ${{ payroll.net_salary|floatformat:2 }})</small>
+                                                    </div>
+                                                    
+                                                    <div class="form-group">
+                                                        <label for="payment_date">Payment Date *</label>
+                                                        <input type="date" class="form-control" name="payment_date" id="payment_date" value="{% now 'Y-m-d' %}" required>
+                                                    </div>
+                                                    
+                                                    <div class="form-group">
+                                                        <label for="notes">Notes (Optional)</label>
+                                                        <textarea class="form-control" name="notes" id="notes" rows="2" placeholder="Add any notes about this payment..."></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                        <i class="fas fa-times"></i> Cancel
+                                                    </button>
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="fas fa-money-bill-wave"></i> Process Payment
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Payment History Modal -->
+                                <div class="modal fade" id="historyModal{{ payroll.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-info text-white">
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-history"></i> Payment History - {{ payroll.employee.get_full_name|default:payroll.employee.username }}
+                                                </h5>
+                                                <button type="button" class="close text-white" data-dismiss="modal">
+                                                    <span>&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Date</th>
+                                                                <th>Amount</th>
+                                                                <th>Notes</th>
+                                                                <th>Recorded By</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for payment in payments %}
+                                                                <tr>
+                                                                    <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                                                                    <td class="text-success"><strong>${{ payment.amount|floatformat:2 }}</strong></td>
+                                                                    <td>{{ payment.notes|default:"-" }}</td>
+                                                                    <td>{{ payment.created_by.get_full_name|default:payment.created_by.username }}</td>
+                                                                </tr>
+                                                            {% empty %}
+                                                                <tr>
+                                                                    <td colspan="4" class="text-center text-muted">No payment history available</td>
+                                                                </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr class="bg-light">
+                                                                <th>Total Paid</th>
+                                                                <th class="text-success">${{ payroll.amount_paid|floatformat:2 }}</th>
+                                                                <th colspan="2"></th>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> No payroll records found for the selected month/year.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pending Payments Summary -->
+    {% if pending_payrolls %}
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-warning text-dark">
+            <h4 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Pending Payments</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Month/Year</th>
+                            <th>Amount to be Paid</th>
+                            <th>Amount Paid</th>
+                            <th>Amount Remaining</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payroll in pending_payrolls %}
+                            <tr>
+                                <td>{{ payroll.employee.get_full_name|default:payroll.employee.username }}</td>
+                                <td>{{ payroll.month }}/{{ payroll.year }}</td>
+                                <td>${{ payroll.net_salary|floatformat:2 }}</td>
+                                <td>${{ payroll.amount_paid|floatformat:2 }}</td>
+                                <td class="text-danger"><strong>${{ payroll.amount_remaining|floatformat:2 }}</strong></td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#paymentModal{{ payroll.id }}">
+                                        <i class="fas fa-edit"></i> Pay
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function togglePaymentType(payrollId) {
+    const incrementalRadio = document.getElementById('incremental' + payrollId);
+    const totalRadio = document.getElementById('total' + payrollId);
+    const incrementalDiv = document.getElementById('incrementalAmount' + payrollId);
+    const totalDiv = document.getElementById('totalAmount' + payrollId);
+    const incrementalInput = document.getElementById('payment_amount');
+    const totalInput = document.getElementById('payment_amount_total');
+    
+    if (incrementalRadio.checked) {
+        incrementalDiv.style.display = 'block';
+        totalDiv.style.display = 'none';
+        incrementalInput.required = true;
+        totalInput.required = false;
+    } else {
+        incrementalDiv.style.display = 'none';
+        totalDiv.style.display = 'block';
+        incrementalInput.required = false;
+        totalInput.required = true;
+    }
+}
+</script>
+{% endblock %}
+

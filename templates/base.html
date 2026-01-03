@@ -72,20 +72,20 @@
 
     <footer class="footer">
         <div class="container">
-            <div class="row">
+            <div class="row align-items-center">
                 <div class="col-md-6">
-                    <h5>DayFlow HR</h5>
-                    <p>Human Resource Management System</p>
+                    <h5 class="mb-1">DayFlow HR</h5>
+                    <p class="mb-1">Human Resource Management System</p>
                     <p class="mb-0"><small>&copy; {% now "Y" %} DayFlow. All rights reserved.</small></p>
                 </div>
                 <div class="col-md-6 text-md-right">
-                    <h5>Quick Links</h5>
+                    <h5 class="mb-1">Quick Links</h5>
                     {% if user.is_authenticated %}
-                        <p><a href="{% url 'dashboard' %}">Dashboard</a></p>
-                        <p><a href="{% url 'profile' %}">Profile</a></p>
+                        <p class="mb-1"><a href="{% url 'dashboard' %}">Dashboard</a></p>
+                        <p class="mb-1"><a href="{% url 'profile' %}">Profile</a></p>
                         <p class="mb-0"><a href="{% url 'attendance_list' %}">Attendance</a></p>
                     {% else %}
-                        <p><a href="{% url 'login' %}">Login</a></p>
+                        <p class="mb-1"><a href="{% url 'login' %}">Login</a></p>
                         <p class="mb-0"><a href="{% url 'register' %}">Register</a></p>
                     {% endif %}
                 </div>
