@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Payroll{% endblock %}
+
+{% block content %}
+<h2>Payroll Information</h2>
+{% if payrolls %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Basic Salary</th>
+                <th>Deductions</th>
+                <th>Net Salary</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payroll in payrolls %}
+                <tr>
+                    <td>{{ payroll.month }}</td>
+                    <td>{{ payroll.year }}</td>
+                    <td>${{ payroll.basic_salary }}</td>
+                    <td>${{ payroll.deductions }}</td>
+                    <td>${{ payroll.net_salary }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No payroll records found.</p>
+{% endif %}
+{% endblock %}

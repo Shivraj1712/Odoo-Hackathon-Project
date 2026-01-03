@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Dashboard{% endblock %}
+
+{% block content %}
+<h2>Welcome, {{ user.get_full_name|default:user.username }}</h2>
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Attendance</h5>
+                <p class="card-text">Check in/out and view your attendance records.</p>
+                <a href="{% url 'attendance_list' %}" class="btn btn-primary">View Attendance</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Leave Requests</h5>
+                <p class="card-text">Apply for leave and view your leave history.</p>
+                <a href="{% url 'leave_list' %}" class="btn btn-primary">View Leave</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Payroll</h5>
+                <p class="card-text">View your salary and payroll details.</p>
+                <a href="{% url 'payroll_view' %}" class="btn btn-primary">View Payroll</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

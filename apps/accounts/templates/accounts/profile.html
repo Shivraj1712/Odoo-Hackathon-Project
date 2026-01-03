@@ -1,0 +1,19 @@
+{% load bootstrap4 %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile</title>
+    {% bootstrap_css %}
+</head>
+<body>
+    <div class="container">
+        <h1>Profile</h1>
+        <p>Username: {{ user.username }}</p>
+        <p>Email: {{ user.email }}</p>
+        <p>Role: {{ user.role }}</p>
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+    </div>
+    {% bootstrap_javascript %}
+</body>
+</html>

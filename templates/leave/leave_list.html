@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Leave Requests{% endblock %}
+
+{% block content %}
+<h2>Leave Requests</h2>
+{% if user.role == 'employee' %}
+    <div class="mb-3">
+        <a href="{% url 'apply_leave' %}" class="btn btn-primary">Apply for Leave</a>
+    </div>
+{% endif %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Employee</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Reason</th>
+            <th>Status</th>
+            {% if user.role == 'admin' %}
+                <th>Actions</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for leave in leaves %}
+            <tr>
+                <td>{{ leave.employee.get_full_name }}</td>
+                <td>{{ leave.start_date }}</td>
+                <td>{{ leave.end_date }}</td>
+                <td>{{ leave.reason }}</td>
+                <td>
+                    <span class="badge badge-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                        {{ leave.status|title }}
+                    </span>
+                </td>
+                {% if user.role == 'admin' %}
+                    <td>
+                        {% if leave.status == 'pending' %}
+                            <form method="post" action="{% url 'approve_leave' leave.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="approve" class="btn btn-sm btn-success">Approve</button>
+                            </form>
+                            <form method="post" action="{% url 'approve_leave' leave.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="reject" class="btn btn-sm btn-danger">Reject</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                {% endif %}
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="{% if user.role == 'admin' %}6{% else %}5{% endif %}">No leave requests found.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

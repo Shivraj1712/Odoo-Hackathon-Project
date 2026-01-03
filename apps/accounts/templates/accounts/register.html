@@ -1,0 +1,21 @@
+{% load bootstrap4 %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+    {% bootstrap_css %}
+</head>
+<body>
+    <div class="container">
+        <h1>Register</h1>
+        <form method="post">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+        <a href="{% url 'login' %}">Login</a>
+    </div>
+    {% bootstrap_javascript %}
+</body>
+</html>
