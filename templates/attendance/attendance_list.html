@@ -3,44 +3,100 @@
 {% block title %}Attendance{% endblock %}
 
 {% block content %}
-<h2>Attendance Records</h2>
-{% if user.role == 'employee' %}
-    <div class="mb-3">
-        {% if not checked_in %}
-            <form method="post" action="{% url 'check_in' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-success">Check In</button>
-            </form>
-        {% else %}
-            <form method="post" action="{% url 'check_out' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Check Out</button>
-            </form>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="fas fa-calendar-check"></i> Attendance Records{% if selected_employee %} - {{ selected_employee.get_full_name|default:selected_employee.username }}{% endif %}</h2>
+    <div>
+        {% if user.role == 'admin' %}
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+            <a href="{% url 'employee_list' %}" class="btn btn-info">
+                <i class="fas fa-users"></i> Employee List
+            </a>
+            {% if employees %}
+                <div class="dropdown d-inline-block ml-2">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="employeeDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-filter"></i> {% if selected_employee %}{{ selected_employee.get_full_name|default:selected_employee.username }}{% else %}Filter by Employee{% endif %}
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="employeeDropdown">
+                        <a class="dropdown-item" href="{% url 'attendance_list' %}">All Employees</a>
+                        {% for emp in employees %}
+                            <a class="dropdown-item" href="{% url 'attendance_list' %}?employee_id={{ emp.id }}">{{ emp.get_full_name|default:emp.username }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+        {% if user.role == 'employee' %}
+            {% if not checked_in %}
+                <form method="post" action="{% url 'check_in' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-check-in">
+                        <i class="fas fa-sign-in-alt"></i> Check In
+                    </button>
+                </form>
+            {% else %}
+                <form method="post" action="{% url 'check_out' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-check-out">
+                        <i class="fas fa-sign-out-alt"></i> Check Out
+                    </button>
+                </form>
+            {% endif %}
         {% endif %}
     </div>
-{% endif %}
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Check In</th>
-            <th>Check Out</th>
-            <th>Hours Worked</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for attendance in attendances %}
-            <tr>
-                <td>{{ attendance.date }}</td>
-                <td>{% if attendance.check_in %}{{ attendance.check_in|time:"H:i" }}{% else %}N/A{% endif %}</td>
-                <td>{% if attendance.check_out %}{{ attendance.check_out|time:"H:i" }}{% else %}N/A{% endif %}</td>
-                <td>{{ attendance.hours_worked }}</td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="4">No attendance records found.</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+</div>
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        {% if user.role == 'admin' and not selected_employee %}<th>Employee</th>{% endif %}
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Hours Worked</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attendance in attendances %}
+                        <tr class="animated-row">
+                            {% if user.role == 'admin' and not selected_employee %}
+                                <td>
+                                    <a href="{% url 'employee_profile' attendance.employee.id %}" class="text-decoration-none">
+                                        <strong>{{ attendance.employee.get_full_name|default:attendance.employee.username }}</strong>
+                                    </a>
+                                </td>
+                            {% endif %}
+                            <td>{{ attendance.date|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="badge badge-{% if attendance.status == 'present' %}success{% elif attendance.status == 'absent' %}danger{% elif attendance.status == 'half_day' %}warning{% else %}secondary{% endif %} badge-lg">
+                                    {{ attendance.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{% if attendance.check_in %}<strong>{{ attendance.check_in|time:"H:i" }}</strong>{% else %}<span class="text-muted">N/A</span>{% endif %}</td>
+                            <td>{% if attendance.check_out %}<strong>{{ attendance.check_out|time:"H:i" }}</strong>{% else %}<span class="text-muted">N/A</span>{% endif %}</td>
+                            <td>
+                                {% if attendance.hours_worked %}
+                                    <strong>{{ attendance.hours_worked }}</strong> hrs
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="{% if user.role == 'admin' and not selected_employee %}6{% else %}5{% endif %}" class="text-center text-muted py-5">
+                                <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                                <p>No attendance records found.</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}

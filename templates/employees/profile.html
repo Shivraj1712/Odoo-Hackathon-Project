@@ -1,31 +1,171 @@
 {% extends 'base.html' %}
 {% load bootstrap4 %}
+{% load static %}
 
 {% block title %}Profile{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3>Profile Information</h3>
-            </div>
-            <div class="card-body">
-                <p><strong>Username:</strong> {{ user.username }}</p>
-                <p><strong>Full Name:</strong> {{ user.get_full_name }}</p>
-                <p><strong>Email:</strong> {{ user.email }}</p>
-                <p><strong>Role:</strong> {{ user.role }}</p>
-                <p><strong>Date Joined:</strong> {{ user.date_joined }}</p>
-                {% if profile %}
-                    <p><strong>Phone:</strong> {{ profile.phone }}</p>
-                    <p><strong>Address:</strong> {{ profile.address }}</p>
-                    {% if profile.profile_pic %}
-                        <img src="{{ profile.profile_pic.url }}" alt="Profile Picture" class="img-thumbnail" width="150">
+<div class="fade-in">
+    <div class="mb-4">
+        {% if is_admin_view %}
+            <a href="{% url 'employee_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Employee List
+            </a>
+            <a href="{% url 'attendance_list' %}?employee_id={{ profile.user.id }}" class="btn btn-info">
+                <i class="fas fa-calendar-check"></i> View Attendance
+            </a>
+        {% else %}
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        {% endif %}
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm text-center">
+                <div class="card-body p-4">
+                    <div class="profile-image-wrapper mb-3">
+                        {% if profile.profile_pic %}
+                            <img src="{{ profile.profile_pic.url }}" alt="Profile Picture" class="profile-image-large">
+                        {% else %}
+                            <div class="profile-image-placeholder">
+                                <i class="fas fa-user fa-5x"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <h4 class="mb-1">{{ profile.user.get_full_name|default:profile.user.username }}</h4>
+                    <p class="text-muted mb-3">{{ profile.user.email }}</p>
+                    <span class="badge badge-{% if profile.user.role == 'admin' %}primary{% else %}info{% endif %} badge-lg">
+                        {{ profile.user.role|title }}
+                    </span>
+                    {% if not is_admin_view %}
+                        <div class="mt-4">
+                            <a href="{% url 'edit_profile' %}" class="btn btn-primary btn-block">
+                                <i class="fas fa-edit"></i> Edit Profile
+                            </a>
+                        </div>
                     {% endif %}
-                {% endif %}
-                <a href="{% url 'edit_profile' %}" class="btn btn-primary">Edit Profile</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-info-circle"></i> Profile Information{% if is_admin_view %} - {{ profile.user.get_full_name|default:profile.user.username }}{% endif %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h5 class="text-primary mb-3"><i class="fas fa-user"></i> Personal Information</h5>
+                            <div class="info-item">
+                                <strong><i class="fas fa-id-card text-muted"></i> Employee ID:</strong>
+                                <span class="float-right">{{ profile.user.username }}</span>
+                            </div>
+                            <hr>
+                            <div class="info-item">
+                                <strong><i class="fas fa-user text-muted"></i> Full Name:</strong>
+                                <span class="float-right">{{ profile.user.get_full_name|default:"N/A" }}</span>
+                            </div>
+                            <hr>
+                            <div class="info-item">
+                                <strong><i class="fas fa-envelope text-muted"></i> Email:</strong>
+                                <span class="float-right">{{ profile.user.email }}</span>
+                            </div>
+                            <hr>
+                            <div class="info-item">
+                                <strong><i class="fas fa-phone text-muted"></i> Phone:</strong>
+                                <span class="float-right">{{ profile.phone|default:"N/A" }}</span>
+                            </div>
+                            <hr>
+                            {% if profile.date_of_birth %}
+                            <div class="info-item">
+                                <strong><i class="fas fa-birthday-cake text-muted"></i> Date of Birth:</strong>
+                                <span class="float-right">{{ profile.date_of_birth|date:"M d, Y" }}</span>
+                            </div>
+                            <hr>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <h5 class="text-primary mb-3"><i class="fas fa-briefcase"></i> Work Information</h5>
+                            <div class="info-item">
+                                <strong><i class="fas fa-user-tag text-muted"></i> Role:</strong>
+                                <span class="float-right">
+                                    <span class="badge badge-{% if profile.user.role == 'admin' %}primary{% else %}info{% endif %}">
+                                        {{ profile.user.role|title }}
+                                    </span>
+                                </span>
+                            </div>
+                            <hr>
+                            <div class="info-item">
+                                <strong><i class="fas fa-calendar-plus text-muted"></i> Date Joined:</strong>
+                                <span class="float-right">{{ profile.user.date_joined|date:"M d, Y" }}</span>
+                            </div>
+                            <hr>
+                            {% if profile.hire_date %}
+                            <div class="info-item">
+                                <strong><i class="fas fa-calendar-check text-muted"></i> Hire Date:</strong>
+                                <span class="float-right">{{ profile.hire_date|date:"M d, Y" }}</span>
+                            </div>
+                            <hr>
+                            {% endif %}
+                            {% if profile.address %}
+                            <div class="info-item">
+                                <strong><i class="fas fa-map-marker-alt text-muted"></i> Address:</strong>
+                                <div class="mt-2 text-right">{{ profile.address }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.profile-image-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-image-large {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid #667eea;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+.profile-image-large:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+}
+
+.profile-image-placeholder {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border: 5px solid #667eea;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    margin: 0 auto;
+}
+
+.info-item {
+    padding: 0.5rem 0;
+}
+
+.info-item strong {
+    color: #495057;
+}
+</style>
 {% endblock %}

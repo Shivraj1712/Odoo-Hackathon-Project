@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import admin_required
+from accounts.models import User
 from .services import get_dashboard_stats
 from attendance.models import Attendance
 from leave.models import LeaveRequest

@@ -4,30 +4,30 @@
 
 {% block content %}
 <h2>Employee List</h2>
-<table class="table">
+<div class="mb-3">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+<table class="table table-striped">
     <thead>
         <tr>
             <th>Name</th>
             <th>Email</th>
-            <th>Department</th>
-            <th>Position</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
         {% for employee in employees %}
         <tr>
-            <td>{{ employee.user.get_full_name }}</td>
+            <td>{{ employee.user.get_full_name|default:employee.user.username }}</td>
             <td>{{ employee.user.email }}</td>
-            <td>{{ employee.department }}</td>
-            <td>{{ employee.position }}</td>
             <td>
-                <a href="{% url 'profile' %}" class="btn btn-sm btn-primary">View Profile</a>
+                <a href="{% url 'employee_profile' employee.user.id %}" class="btn btn-sm btn-info">View Profile</a>
+                <a href="{% url 'attendance_list' %}?employee_id={{ employee.user.id }}" class="btn btn-sm btn-primary">View Attendance</a>
             </td>
         </tr>
         {% empty %}
         <tr>
-            <td colspan="5">No employees found.</td>
+            <td colspan="3">No employees found.</td>
         </tr>
         {% endfor %}
     </tbody>
