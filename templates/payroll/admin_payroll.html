@@ -7,9 +7,14 @@
 {% block content %}
 <div class="fade-in">
     <div class="row mb-4">
-        <div class="col-md-12">
+        <div class="col-md-8">
             <h2><i class="fas fa-money-bill-wave"></i> Payroll Management</h2>
             <p class="text-muted">Manage employee payrolls, payments, and attendance</p>
+        </div>
+        <div class="col-md-4 text-right">
+            <button type="button" class="btn btn-success btn-lg" data-toggle="modal" data-target="#createPayrollModal">
+                <i class="fas fa-plus-circle"></i> Create New Payroll
+            </button>
         </div>
     </div>
 
@@ -119,6 +124,9 @@
         </div>
         <div class="card-body">
             {% if payrolls %}
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle"></i> <strong>Tip:</strong> Use the buttons in the <strong>"Actions"</strong> column (last column on the right) to edit payroll amounts, update payments, or view payment history. Scroll horizontally if needed.
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
@@ -132,7 +140,7 @@
                                 <th>Working Days</th>
                                 <th>Status</th>
                                 <th>Payment Date</th>
-                                <th>Actions</th>
+                                <th class="bg-light"><strong>Actions</strong> <i class="fas fa-cog"></i></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -170,15 +178,23 @@
                                             <span class="text-muted">-</span>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#paymentModal{{ payroll.id }}">
-                                            <i class="fas fa-dollar-sign"></i> Pay
-                                        </button>
-                                        {% if payments %}
-                                        <button type="button" class="btn btn-sm btn-info mt-1" data-toggle="modal" data-target="#historyModal{{ payroll.id }}">
-                                            <i class="fas fa-history"></i> History
-                                        </button>
-                                        {% endif %}
+                                    <td class="text-center" style="min-width: 140px;">
+                                        <div class="btn-group-vertical" role="group">
+                                            <button type="button" class="btn btn-sm btn-warning mb-1" data-toggle="modal" data-target="#editModal{{ payroll.id }}" title="Edit Payroll Amount - Click to edit the payroll amount given to employee">
+                                                <i class="fas fa-edit"></i> Edit Payroll
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-success mb-1" data-toggle="modal" data-target="#updateAmountModal{{ payroll.id }}" title="Update Amount Paid/Pending">
+                                                <i class="fas fa-money-bill-alt"></i> Update Amount
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-primary mb-1" data-toggle="modal" data-target="#paymentModal{{ payroll.id }}" title="Make Payment">
+                                                <i class="fas fa-dollar-sign"></i> Make Payment
+                                            </button>
+                                            {% if payments %}
+                                            <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#historyModal{{ payroll.id }}" title="View Payment History">
+                                                <i class="fas fa-history"></i> History
+                                            </button>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
 
@@ -285,6 +301,232 @@
                                     </div>
                                 </div>
 
+                                <!-- Edit Payroll Modal -->
+                                <div class="modal fade" id="editModal{{ payroll.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-warning text-dark">
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-edit"></i> Edit Payroll - {{ payroll.employee.get_full_name|default:payroll.employee.username }}
+                                                </h5>
+                                                <button type="button" class="close" data-dismiss="modal">
+                                                    <span>&times;</span>
+                                                </button>
+                                            </div>
+                                            <form method="post" action="{% url 'edit_payroll' payroll.id %}">
+                                                {% csrf_token %}
+                                                <div class="modal-body">
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-4">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body text-center">
+                                                                    <h6 class="text-muted mb-1">Current Payroll Amount</h6>
+                                                                    <h4 class="text-primary mb-0">${{ payroll.net_salary|floatformat:2 }}</h4>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body text-center">
+                                                                    <h6 class="text-muted mb-1">Amount Paid</h6>
+                                                                    <h4 class="text-success mb-0">${{ payroll.amount_paid|floatformat:2 }}</h4>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body text-center">
+                                                                    <h6 class="text-muted mb-1">Amount Pending</h6>
+                                                                    <h4 class="text-warning mb-0">${{ payroll.amount_remaining|floatformat:2 }}</h4>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Edit Mode Toggle -->
+                                                    <div class="form-group">
+                                                        <label><strong>Edit Mode *</strong></label>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="edit_mode" id="directMode{{ payroll.id }}" value="direct" onchange="toggleEditMode({{ payroll.id }})">
+                                                            <label class="form-check-label" for="directMode{{ payroll.id }}">
+                                                                <strong>Direct Edit</strong> - Edit Payroll Amount directly
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="edit_mode" id="componentsMode{{ payroll.id }}" value="components" checked onchange="toggleEditMode({{ payroll.id }})">
+                                                            <label class="form-check-label" for="componentsMode{{ payroll.id }}">
+                                                                <strong>Edit Components</strong> - Edit Basic Salary, Allowances, Deductions
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Direct Edit Mode -->
+                                                    <div id="directEdit{{ payroll.id }}" style="display: none;">
+                                                        <div class="form-group">
+                                                            <label for="net_salary{{ payroll.id }}"><strong>Payroll Amount (Net Salary) *</strong></label>
+                                                            <div class="input-group">
+                                                                <div class="input-group-prepend">
+                                                                    <span class="input-group-text">$</span>
+                                                                </div>
+                                                                <input type="number" step="0.01" class="form-control" name="net_salary" id="net_salary{{ payroll.id }}" value="{{ payroll.net_salary }}" min="0" required oninput="updateNetSalaryPreview({{ payroll.id }})">
+                                                            </div>
+                                                            <small class="form-text text-muted">Directly edit the total payroll amount given to the employee. The system will automatically adjust the basic salary to match this amount.</small>
+                                                            <div class="mt-2 alert alert-success">
+                                                                <i class="fas fa-check-circle"></i> <strong>New Payroll Amount:</strong> $<span id="netSalaryPreview{{ payroll.id }}">{{ payroll.net_salary|floatformat:2 }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Components Edit Mode -->
+                                                    <div id="componentsEdit{{ payroll.id }}">
+                                                        <div class="form-group">
+                                                            <label for="basic_salary{{ payroll.id }}"><strong>Basic Salary *</strong></label>
+                                                            <div class="input-group">
+                                                                <div class="input-group-prepend">
+                                                                    <span class="input-group-text">$</span>
+                                                                </div>
+                                                                <input type="number" step="0.01" class="form-control" name="basic_salary" id="basic_salary{{ payroll.id }}" value="{{ payroll.basic_salary }}" min="0" oninput="updateNetSalaryFromComponents({{ payroll.id }})">
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="form-group">
+                                                            <label for="allowances{{ payroll.id }}"><strong>Allowances</strong></label>
+                                                            <div class="input-group">
+                                                                <div class="input-group-prepend">
+                                                                    <span class="input-group-text">$</span>
+                                                                </div>
+                                                                <input type="number" step="0.01" class="form-control" name="allowances" id="allowances{{ payroll.id }}" value="{{ payroll.allowances }}" min="0" oninput="updateNetSalaryFromComponents({{ payroll.id }})">
+                                                            </div>
+                                                            <small class="form-text text-muted">Additional allowances (bonuses, incentives, etc.)</small>
+                                                        </div>
+                                                        
+                                                        <div class="form-group">
+                                                            <label for="deductions{{ payroll.id }}"><strong>Deductions</strong></label>
+                                                            <div class="input-group">
+                                                                <div class="input-group-prepend">
+                                                                    <span class="input-group-text">$</span>
+                                                                </div>
+                                                                <input type="number" step="0.01" class="form-control" name="deductions" id="deductions{{ payroll.id }}" value="{{ payroll.deductions }}" min="0" oninput="updateNetSalaryFromComponents({{ payroll.id }})">
+                                                            </div>
+                                                            <small class="form-text text-muted">Deductions (taxes, loans, etc.)</small>
+                                                        </div>
+                                                        
+                                                        <div class="alert alert-info">
+                                                            <i class="fas fa-info-circle"></i> <strong>Calculated Net Salary:</strong> $<span id="calculatedNetSalary{{ payroll.id }}">{{ payroll.net_salary|floatformat:2 }}</span>
+                                                            <br><small>Formula: Basic Salary + Allowances - Deductions</small>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="form-group">
+                                                        <label for="working_days{{ payroll.id }}"><strong>Working Days</strong></label>
+                                                        <input type="number" class="form-control" name="working_days" id="working_days{{ payroll.id }}" value="{{ payroll.working_days }}" min="0" required>
+                                                        <small class="form-text text-muted">Number of working days for this payroll period</small>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                        <i class="fas fa-times"></i> Cancel
+                                                    </button>
+                                                    <button type="submit" class="btn btn-warning">
+                                                        <i class="fas fa-save"></i> Update Payroll
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Update Amount Paid/Pending Modal -->
+                                <div class="modal fade" id="updateAmountModal{{ payroll.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-success text-white">
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-money-bill-alt"></i> Update Amount Paid & Pending - {{ payroll.employee.get_full_name|default:payroll.employee.username }}
+                                                </h5>
+                                                <button type="button" class="close text-white" data-dismiss="modal">
+                                                    <span>&times;</span>
+                                                </button>
+                                            </div>
+                                            <form method="post" action="{% url 'update_amount_paid_pending' payroll.id %}">
+                                                {% csrf_token %}
+                                                <div class="modal-body">
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-4">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body text-center">
+                                                                    <h6 class="text-muted mb-1">Net Salary</h6>
+                                                                    <h4 class="text-primary mb-0">${{ payroll.net_salary|floatformat:2 }}</h4>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body text-center">
+                                                                    <h6 class="text-muted mb-1">Current Amount Paid</h6>
+                                                                    <h4 class="text-success mb-0">${{ payroll.amount_paid|floatformat:2 }}</h4>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body text-center">
+                                                                    <h6 class="text-muted mb-1">Current Amount Pending</h6>
+                                                                    <h4 class="text-warning mb-0">${{ payroll.amount_remaining|floatformat:2 }}</h4>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="alert alert-info">
+                                                        <i class="fas fa-info-circle"></i> <strong>Note:</strong> Amount Paid + Amount Pending must equal Net Salary (${% widthratio payroll.net_salary 1 1 %}.00)
+                                                    </div>
+                                                    
+                                                    <div class="form-group">
+                                                        <label for="amount_paid{{ payroll.id }}"><strong>Amount Paid *</strong></label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <span class="input-group-text">$</span>
+                                                            </div>
+                                                            <input type="number" step="0.01" class="form-control" name="amount_paid" id="amount_paid{{ payroll.id }}" value="{{ payroll.amount_paid }}" min="0" max="{{ payroll.net_salary }}" required oninput="updatePendingAmount({{ payroll.id }}, {{ payroll.net_salary }})">
+                                                        </div>
+                                                        <small class="form-text text-muted">Enter the total amount paid to this employee</small>
+                                                    </div>
+                                                    
+                                                    <div class="form-group">
+                                                        <label for="amount_pending{{ payroll.id }}"><strong>Amount Pending *</strong></label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <span class="input-group-text">$</span>
+                                                            </div>
+                                                            <input type="number" step="0.01" class="form-control" name="amount_pending" id="amount_pending{{ payroll.id }}" value="{{ payroll.amount_remaining }}" min="0" max="{{ payroll.net_salary }}" required readonly>
+                                                        </div>
+                                                        <small class="form-text text-muted">Automatically calculated: Net Salary - Amount Paid</small>
+                                                    </div>
+                                                    
+                                                    <div class="form-group">
+                                                        <label for="payment_date_update{{ payroll.id }}">Payment Date</label>
+                                                        <input type="date" class="form-control" name="payment_date" id="payment_date_update{{ payroll.id }}" value="{% if payroll.payment_date %}{{ payroll.payment_date|date:'Y-m-d' }}{% else %}{% now 'Y-m-d' %}{% endif %}">
+                                                    </div>
+                                                    
+                                                    <div class="form-group">
+                                                        <label for="notes_update{{ payroll.id }}">Notes (Optional)</label>
+                                                        <textarea class="form-control" name="notes" id="notes_update{{ payroll.id }}" rows="2" placeholder="Add any notes about this update..."></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                        <i class="fas fa-times"></i> Cancel
+                                                    </button>
+                                                    <button type="submit" class="btn btn-success">
+                                                        <i class="fas fa-save"></i> Update Amounts
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Payment History Modal -->
                                 <div class="modal fade" id="historyModal{{ payroll.id }}" tabindex="-1">
                                     <div class="modal-dialog modal-lg">
@@ -302,7 +544,7 @@
                                                     <table class="table table-sm">
                                                         <thead>
                                                             <tr>
-                                                                <th>Date</th>
+                                                                <th>Date & Time</th>
                                                                 <th>Amount</th>
                                                                 <th>Notes</th>
                                                                 <th>Recorded By</th>
@@ -311,7 +553,10 @@
                                                         <tbody>
                                                             {% for payment in payments %}
                                                                 <tr>
-                                                                    <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                                                                    <td>
+                                                                        <strong>{{ payment.payment_date|date:"M d, Y" }}</strong><br>
+                                                                        <small class="text-muted">{{ payment.created_at|date:"h:i A" }}</small>
+                                                                    </td>
                                                                     <td class="text-success"><strong>${{ payment.amount|floatformat:2 }}</strong></td>
                                                                     <td>{{ payment.notes|default:"-" }}</td>
                                                                     <td>{{ payment.created_by.get_full_name|default:payment.created_by.username }}</td>
@@ -343,8 +588,13 @@
                     </table>
                 </div>
             {% else %}
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> No payroll records found for the selected month/year.
+                <div class="alert alert-warning text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
+                    <h4>No Payroll Records Found</h4>
+                    <p class="lead">There are no payroll records in the system yet.</p>
+                    <button type="button" class="btn btn-success btn-lg mt-3" data-toggle="modal" data-target="#createPayrollModal">
+                        <i class="fas fa-plus-circle"></i> Create Your First Payroll
+                    </button>
                 </div>
             {% endif %}
         </div>
@@ -413,6 +663,178 @@ function togglePaymentType(payrollId) {
         totalInput.required = true;
     }
 }
+
+function updatePendingAmount(payrollId, netSalary) {
+    const amountPaidInput = document.getElementById('amount_paid' + payrollId);
+    const amountPendingInput = document.getElementById('amount_pending' + payrollId);
+    
+    if (amountPaidInput && amountPendingInput) {
+        const amountPaid = parseFloat(amountPaidInput.value) || 0;
+        const amountPending = Math.max(0, netSalary - amountPaid);
+        amountPendingInput.value = amountPending.toFixed(2);
+        
+        // Validate
+        if (amountPaid > netSalary) {
+            amountPaidInput.setCustomValidity('Amount Paid cannot exceed Net Salary');
+        } else {
+            amountPaidInput.setCustomValidity('');
+        }
+    }
+}
+
+function toggleEditMode(payrollId) {
+    const directMode = document.getElementById('directMode' + payrollId);
+    const directEdit = document.getElementById('directEdit' + payrollId);
+    const componentsEdit = document.getElementById('componentsEdit' + payrollId);
+    const netSalaryInput = document.getElementById('net_salary' + payrollId);
+    const basicSalaryInput = document.getElementById('basic_salary' + payrollId);
+    const allowancesInput = document.getElementById('allowances' + payrollId);
+    const deductionsInput = document.getElementById('deductions' + payrollId);
+    
+    if (directMode.checked) {
+        directEdit.style.display = 'block';
+        componentsEdit.style.display = 'none';
+        // Make net_salary required, others optional
+        if (netSalaryInput) netSalaryInput.required = true;
+        if (basicSalaryInput) basicSalaryInput.required = false;
+    } else {
+        directEdit.style.display = 'none';
+        componentsEdit.style.display = 'block';
+        // Make basic_salary required, net_salary optional
+        if (netSalaryInput) netSalaryInput.required = false;
+        if (basicSalaryInput) basicSalaryInput.required = true;
+    }
+}
+
+function updateNetSalaryPreview(payrollId) {
+    const netSalaryInput = document.getElementById('net_salary' + payrollId);
+    const preview = document.getElementById('netSalaryPreview' + payrollId);
+    
+    if (netSalaryInput && preview) {
+        const value = parseFloat(netSalaryInput.value) || 0;
+        preview.textContent = value.toFixed(2);
+    }
+}
+
+function updateNetSalaryFromComponents(payrollId) {
+    const basicSalary = parseFloat(document.getElementById('basic_salary' + payrollId).value) || 0;
+    const allowances = parseFloat(document.getElementById('allowances' + payrollId).value) || 0;
+    const deductions = parseFloat(document.getElementById('deductions' + payrollId).value) || 0;
+    const calculatedNet = document.getElementById('calculatedNetSalary' + payrollId);
+    
+    if (calculatedNet) {
+        const netSalary = basicSalary + allowances - deductions;
+        calculatedNet.textContent = Math.max(0, netSalary).toFixed(2);
+    }
+}
 </script>
+
+<!-- Create Payroll Modal -->
+<div class="modal fade" id="createPayrollModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle"></i> Create New Payroll
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form method="post" action="{% url 'create_payroll' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="employee"><strong>Employee *</strong></label>
+                        <select class="form-control" name="employee" id="employee" required>
+                            <option value="">Select an employee...</option>
+                            {% for employee in employees %}
+                                <option value="{{ employee.id }}">{{ employee.get_full_name|default:employee.username }} ({{ employee.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="month"><strong>Month *</strong></label>
+                                <select class="form-control" name="month" id="month" required>
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="year"><strong>Year *</strong></label>
+                                <input type="number" class="form-control" name="year" id="year" value="{% now 'Y' %}" min="2020" max="2030" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="basic_salary_create"><strong>Basic Salary *</strong></label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            <input type="number" step="0.01" class="form-control" name="basic_salary" id="basic_salary_create" placeholder="0.00" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="allowances_create"><strong>Allowances</strong></label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            <input type="number" step="0.01" class="form-control" name="allowances" id="allowances_create" value="0" min="0">
+                        </div>
+                        <small class="form-text text-muted">Additional allowances (bonuses, incentives, etc.)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="deductions_create"><strong>Deductions</strong></label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            <input type="number" step="0.01" class="form-control" name="deductions" id="deductions_create" value="0" min="0">
+                        </div>
+                        <small class="form-text text-muted">Deductions (taxes, loans, etc.)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="working_days_create"><strong>Working Days</strong></label>
+                        <input type="number" class="form-control" name="working_days" id="working_days_create" value="0" min="0">
+                        <small class="form-text text-muted">Number of working days for this payroll period</small>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>Note:</strong> Net Salary will be automatically calculated as: Basic Salary + Allowances - Deductions
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Create Payroll
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
